@@ -44,3 +44,7 @@ CRM Data Table
 AI Follow-Up Message
   ↓
 Response to User
+
+## 🔄 n8n Workflow
+
+![Real Estate Lead Bot Workflow](screenshots/real-estate-workflow.png)
