@@ -1,16 +1,46 @@
-# React + Vite
+# Real Estate AI Lead Bot
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An AI-powered real estate lead intake and qualification assistant that collects property inquiries, analyzes leads, assigns lead scores, determines urgency and intent, and generates professional follow-up messages.
 
-Currently, two official plugins are available:
+## 🚀 Project Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+The Real Estate AI Lead Bot is an automation project designed to help real estate agents manage incoming property inquiries more efficiently.
 
-## React Compiler
+The system receives a potential client's property request, uses AI to analyze the lead, stores the lead information in a CRM data table, and generates a personalized follow-up message for qualified leads.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## ✨ Key Features
 
-## Expanding the ESLint configuration
+- 🏠 Real estate lead intake
+- 🤖 AI-powered lead qualification
+- 📊 Lead scoring from 0–100
+- 🔥 Hot, Warm, and Cold lead classification
+- ⚡ Urgency detection
+- 🎯 Buyer, renter, seller, or unknown intent detection
+- 📝 Automatic lead summaries
+- 💬 AI-generated follow-up messages
+- 🗂️ Lead storage in a CRM data table
+- 🔄 Automated workflow using n8n
+- 💻 React-based chat interface
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🧠 How It Works
+
+The system follows this process:
+
+```text
+User
+  ↓
+React AI Assistant
+  ↓
+n8n Webhook
+  ↓
+Lead Information Processing
+  ↓
+AI Lead Qualification
+  ↓
+Lead Score + Status + Intent + Urgency
+  ↓
+CRM Data Table
+  ↓
+AI Follow-Up Message
+  ↓
+Response to User
