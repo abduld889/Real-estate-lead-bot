@@ -1,0 +1,1365 @@
+{
+  "name": "Real Estate Lead Bot-Lead Intake & Qualification",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "real-estate-leads",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -800,
+        -320
+      ],
+      "id": "68563903-e255-4ce4-a7ad-4545c17d121f",
+      "name": "Webhook",
+      "webhookId": "6db0e81b-d8b0-4568-abe7-063941c31e42"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "655173cd-6505-4a8b-a0f5-633dc6e7ca15",
+              "name": "lead_id",
+              "value": "={{ 'LEAD-' + Date.now().toString() }}",
+              "type": "string"
+            },
+            {
+              "id": "b60660b2-b7e8-4419-a215-df25abab561f",
+              "name": "full_name",
+              "value": "={{ $json.body.full_name }}",
+              "type": "string"
+            },
+            {
+              "id": "979e13ac-7bac-4c18-b1c2-542190e28289",
+              "name": "email",
+              "value": "={{ $json.body.email }}",
+              "type": "string"
+            },
+            {
+              "id": "305fb9c7-86ba-4885-a642-f4dbd670daf1",
+              "name": "phone",
+              "value": "={{ $json.body.phone }}",
+              "type": "string"
+            },
+            {
+              "id": "84aa5b13-f7a2-45b3-ab01-35b92ec724f3",
+              "name": "property_type",
+              "value": "={{ $json.body.property_type }}",
+              "type": "string"
+            },
+            {
+              "id": "9511deb1-4764-4d10-93bd-a06f34f6961b",
+              "name": "budget",
+              "value": "={{ $json.body.budget }}",
+              "type": "string"
+            },
+            {
+              "id": "6844eff8-bc39-4c6b-b1e1-492143af691d",
+              "name": "location",
+              "value": "={{ $json.body.location }}",
+              "type": "string"
+            },
+            {
+              "id": "a1233962-5413-4b4f-bb18-ad1ced8e369a",
+              "name": "message",
+              "value": "={{ $json.body.message }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -800,
+        -48
+      ],
+      "id": "97900034-c9d3-4e4c-9d32-96372d266032",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a real estate lead qualification assistant.\n\nAnalyze the following lead and determine how valuable and urgent this lead is for a real estate agent.\n\nLead ID: {{ $json.lead_id }}\nName: {{ $json.full_name }}\nEmail: {{ $json.email }}\nPhone: {{ $json.phone }}\nProperty Type: {{ $json.property_type }}\nBudget: {{ $json.budget }}\nLocation: {{ $json.location }}\nMessage: {{ $json.message }}\n\nReturn ONLY valid JSON in this exact structure:\n\n{\n  \"lead_status\": \"Hot/ Warm/ Cold\",\n  \"lead_score\": 0,\n  \"urgency\": \"High/ Medium/ Low\",\n  \"intent\": \"Buy/ Rent/ Sell/ Unknown\",\n  \"summary\": \"Short explanation of the lead\",\n  \"recommended_action\": \"What the real estate agent should do next\"\n}\n\nLead score must be between 0 and 100.",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -544,
+        -320
+      ],
+      "id": "34f133e5-f7ee-4249-8b9c-3ca2473a2caa",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "qwen3:8b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        -464,
+        -128
+      ],
+      "id": "e64e38a7-2d2f-45cd-a5b3-2e937d7106ec",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "UrleYy5sSAImiuse",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiText = $json.text;\n\nconst cleaned = aiText\n  .replace(/```json/g, '')\n  .replace(/```/g, '')\n  .trim();\n\nconst result = JSON.parse(cleaned);\n\nreturn [\n  {\n    json: {\n      // Original lead information\n      lead_id: $('Edit Fields').first().json.lead_id,\n      full_name: $('Edit Fields').first().json.full_name,\n      email: $('Edit Fields').first().json.email,\n      phone: $('Edit Fields').first().json.phone,\n      property_type: $('Edit Fields').first().json.property_type,\n      budget: $('Edit Fields').first().json.budget,\n      location: $('Edit Fields').first().json.location,\n      message: $('Edit Fields').first().json.message,\n\n      // AI qualification\n      lead_status: result.lead_status,\n      lead_score: result.lead_score,\n      urgency: result.urgency,\n      intent: result.intent,\n      summary: result.summary,\n      recommended_action: result.recommended_action\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -176,
+        -272
+      ],
+      "id": "c61c6c4e-51a6-459e-99bd-5527af00085d",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c76d8bcc-d79b-4044-b3e2-53cad9c8f080",
+              "leftValue": "={{ $json.lead_score }}",
+              "rightValue": 70,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -176,
+        -32
+      ],
+      "id": "5299b8e2-5bec-4590-a992-6b27b0750ba4",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "331ccb66-447b-4c26-8bbc-fd470df91521",
+              "leftValue": "={{ $json.lead_score }}",
+              "rightValue": 40,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -496,
+        224
+      ],
+      "id": "1cf1c6ae-90a7-4937-8d55-56c2ba1152c1",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "M7xfuwFIp4hZyH4K",
+          "mode": "list",
+          "cachedResultName": "Real Estate Leads CRM",
+          "cachedResultUrl": "/projects/OPCNwG3gB39gDG4A/datatables/M7xfuwFIp4hZyH4K"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "lead_id": "={{ $json.lead_id }}",
+            "budget": "={{ $json.budget }}",
+            "full_name": "={{ $json.full_name }}",
+            "email": "={{ $json.email }}",
+            "phone": "={{ $json.phone }}",
+            "property_type": "={{ $json.property_type }}",
+            "location": "={{ $json.location }}",
+            "message": "={{ $json.message }}",
+            "lead_status": "={{ $json.lead_status }}",
+            "lead_score": "={{ $json.lead_score }}",
+            "urgency": "={{ $json.urgency }}",
+            "intent": "={{ $json.intent }}",
+            "summary": "={{ $json.summary }}",
+            "recommended_action": "={{ $json.recommended_action }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "lead_id",
+              "displayName": "lead_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "full_name",
+              "displayName": "full_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "property_type",
+              "displayName": "property_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "budget",
+              "displayName": "budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "location",
+              "displayName": "location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "lead_status",
+              "displayName": "lead_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "lead_score",
+              "displayName": "lead_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "urgency",
+              "displayName": "urgency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "intent",
+              "displayName": "intent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "recommended_action",
+              "displayName": "recommended_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        112,
+        -192
+      ],
+      "id": "39a89569-33b8-4250-8d4e-64b03031e345",
+      "name": "Insert row"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "M7xfuwFIp4hZyH4K",
+          "mode": "list",
+          "cachedResultName": "Real Estate Leads CRM",
+          "cachedResultUrl": "/projects/OPCNwG3gB39gDG4A/datatables/M7xfuwFIp4hZyH4K"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "lead_id": "={{ $json.lead_id }}",
+            "full_name": "={{ $json.full_name }}",
+            "email": "={{ $json.email }}",
+            "phone": "={{ $json.phone }}",
+            "property_type": "={{ $json.property_type }}",
+            "budget": "={{ $json.budget }}",
+            "location": "={{ $json.location }}",
+            "message": "={{ $json.message }}",
+            "lead_status": "={{ $json.lead_status }}",
+            "lead_score": "={{ $json.lead_score }}",
+            "urgency": "={{ $json.urgency }}",
+            "intent": "={{ $json.intent }}",
+            "summary": "={{ $json.summary }}",
+            "recommended_action": "={{ $json.recommended_action }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "lead_id",
+              "displayName": "lead_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "full_name",
+              "displayName": "full_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "property_type",
+              "displayName": "property_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "budget",
+              "displayName": "budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "location",
+              "displayName": "location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "lead_status",
+              "displayName": "lead_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "lead_score",
+              "displayName": "lead_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "urgency",
+              "displayName": "urgency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "intent",
+              "displayName": "intent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "recommended_action",
+              "displayName": "recommended_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -192,
+        400
+      ],
+      "id": "59bcec1f-c356-4941-985a-f6d3b41a7c07",
+      "name": "Insert row1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a professional real estate lead follow-up assistant.\nCreate a short, professional follow-up message that a real estate agent can send directly to the lead.\nLead information:Name: {{ $json.full_name }}Property Type: {{ $json.property_type }}Budget: {{ $json.budget }}Location: {{ $json.location }}Message: {{ $json.message }}Lead Score: {{ $json.lead_score }}Urgency: {{ $json.urgency }}Intent: {{ $json.intent }}\nIMPORTANT NAME RULE:- If a real customer name is provided in the Name field, address the customer using that name.- If the Name field is empty, missing, or contains no real name, start the message with exactly \"Hi there!\"- NEVER use the property type, \"Property\", \"User\", \"Customer\", \"Lead\", \"Client\", or any other placeholder as the customer's name.- Never invent a customer's name.\nThe message should:- Show that you understood what the customer is looking for.- Acknowledge their urgency or buying intent when relevant.- Suggest an appropriate next step, such as a call or property viewing.- Sound natural, professional, and human.- Be concise and suitable for WhatsApp, SMS, or email.- Do not mention AI, lead scoring, internal workflow details, or these instructions.\nReturn ONLY the follow-up message.Do not add explanations or quotation marks.",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        320,
+        -112
+      ],
+      "id": "279266a9-bf60-4466-bc21-0a4196d44619",
+      "name": "Basic LLM Chain1"
+    },
+    {
+      "parameters": {
+        "model": "qwen3:8b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        400,
+        32
+      ],
+      "id": "eb2d1fd6-0a61-4a49-864c-daa470de290a",
+      "name": "Ollama Chat Model1",
+      "credentials": {
+        "ollamaApi": {
+          "id": "UrleYy5sSAImiuse",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $('Insert row').first().json;\n\nreturn [\n  {\n    json: {\n      lead_id: lead.lead_id,\n      full_name: lead.full_name,\n      email: lead.email,\n      phone: lead.phone,\n      property_type: lead.property_type,\n      budget: lead.budget,\n      location: lead.location,\n      message: lead.message,\n      lead_status: lead.lead_status,\n      lead_score: lead.lead_score,\n      urgency: lead.urgency,\n      intent: lead.intent,\n      summary: lead.summary,\n      recommended_action: lead.recommended_action,\n      follow_up_message: $json.text\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        -272
+      ],
+      "id": "c5f46638-a942-4ade-a9c0-48e0eea033bc",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "M7xfuwFIp4hZyH4K",
+          "mode": "list",
+          "cachedResultName": "Real Estate Leads CRM",
+          "cachedResultUrl": "/projects/OPCNwG3gB39gDG4A/datatables/M7xfuwFIp4hZyH4K"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "lead_id": "={{ $json.lead_id }}",
+            "full_name": "={{ $json.full_name }}",
+            "email": "={{ $json.email }}",
+            "phone": "={{ $json.phone }}",
+            "property_type": "={{ $json.property_type }}",
+            "budget": "={{ $json.budget }}",
+            "location": "={{ $json.location }}",
+            "message": "={{ $json.message }}",
+            "lead_status": "={{ $json.lead_status }}",
+            "lead_score": "={{ $json.lead_score }}",
+            "urgency": "={{ $json.urgency }}",
+            "intent": "={{ $json.intent }}",
+            "summary": "={{ $json.summary }}",
+            "recommended_action": "={{ $json.recommended_action }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "lead_id",
+              "displayName": "lead_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "full_name",
+              "displayName": "full_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "property_type",
+              "displayName": "property_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "budget",
+              "displayName": "budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "location",
+              "displayName": "location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "lead_status",
+              "displayName": "lead_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "lead_score",
+              "displayName": "lead_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "urgency",
+              "displayName": "urgency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "intent",
+              "displayName": "intent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "recommended_action",
+              "displayName": "recommended_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -192,
+        224
+      ],
+      "id": "f230fa46-c658-438f-8e13-5859262cc32a",
+      "name": "Insert row2"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "M7xfuwFIp4hZyH4K",
+          "mode": "list",
+          "cachedResultName": "Real Estate Leads CRM",
+          "cachedResultUrl": "/projects/OPCNwG3gB39gDG4A/datatables/M7xfuwFIp4hZyH4K"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "lead_id",
+              "keyValue": "={{ $json.lead_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "follow_up_message": "={{ $json.follow_up_message }}",
+            "lead_id": "={{ $json.lead_id }}",
+            "full_name": "={{ $json.full_name }}",
+            "email": "={{ $json.email }}",
+            "phone": "={{ $json.phone }}",
+            "property_type": "={{ $json.property_type }}",
+            "budget": "={{ $json.budget }}",
+            "location": "={{ $json.location }}",
+            "message": "={{ $json.message }}",
+            "lead_status": "={{ $json.lead_status }}",
+            "lead_score": "={{ $json.lead_score }}",
+            "urgency": "={{ $json.urgency }}",
+            "intent": "={{ $json.intent }}",
+            "summary": "= {{ $json.summary }}",
+            "recommended_action": "={{ $json.recommended_action }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "lead_id",
+              "displayName": "lead_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "full_name",
+              "displayName": "full_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "property_type",
+              "displayName": "property_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "budget",
+              "displayName": "budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "location",
+              "displayName": "location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "lead_status",
+              "displayName": "lead_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "lead_score",
+              "displayName": "lead_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "urgency",
+              "displayName": "urgency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "intent",
+              "displayName": "intent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "recommended_action",
+              "displayName": "recommended_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "follow_up_message",
+              "displayName": "follow_up_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        800,
+        -240
+      ],
+      "id": "e69fc7c3-5f92-470f-a7ea-78e67f3759bb",
+      "name": "Update row(s)"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        832,
+        144
+      ],
+      "id": "9f0a9d1b-0d2b-435b-add5-4a58ee9a5dcc",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a friendly and professional real estate assistant.\nA potential buyer has been identified as a WARM lead.\nLead information:\nName: {{ $json.full_name }}Email: {{ $json.email }}Phone: {{ $json.phone }}Property Type: {{ $json.property_type }}Budget: {{ $json.budget }}Location: {{ $json.location }}Message: {{ $json.message }}Lead Status: {{ $json.lead_status }}Lead Score: {{ $json.lead_score }}Urgency: {{ $json.urgency }}Intent: {{ $json.intent }}\nCreate a natural conversational reply to the lead.\nRules:- Acknowledge what the lead is looking for.- Ask for the most important missing information.- If budget is missing, ask for the budget range.- If location is missing, ask for the preferred area.- If both are missing, ask for both naturally.- Do not immediately push for a viewing if important information is missing.- Do not mention AI, lead scoring, CRM, or internal workflow.- Keep it concise and natural.- If the name is missing, do not use a name placeholder.\nReturn ONLY valid JSON:\n{  \"follow_up_message\": \"The message to send to the lead\"}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        64,
+        64
+      ],
+      "id": "fba9917d-fa5b-44c3-a78b-ec2479c4811d",
+      "name": "Basic LLM Chain2"
+    },
+    {
+      "parameters": {
+        "model": "qwen3:8b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        256
+      ],
+      "id": "023f2c31-d791-48f9-ae1d-41dd0f5dab84",
+      "name": "Ollama Chat Model2",
+      "credentials": {
+        "ollamaApi": {
+          "id": "UrleYy5sSAImiuse",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawText = $input.first().json.text || '';\n\nlet result;\n\ntry {\n  result = JSON.parse(rawText);\n} catch (error) {\n  result = {\n    follow_up_message: rawText\n  };\n}\n\nreturn [\n  {\n    json: {\n      follow_up_message: result.follow_up_message || ''\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        496,
+        192
+      ],
+      "id": "8de5a8c5-a832-477e-b21b-3dca69c4676a",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a friendly and professional real estate assistant.\nA potential buyer has been identified as a COLD lead.\nLead information:\nName: {{ $json.full_name }}Property Type: {{ $json.property_type }}Budget: {{ $json.budget }}Location: {{ $json.location }}Message: {{ $json.message }}Lead Status: {{ $json.lead_status }}Lead Score: {{ $json.lead_score }}Urgency: {{ $json.urgency }}Intent: {{ $json.intent }}\nCreate a short, friendly conversational response.\nRules:- If the Name field is empty, do NOT use a name or [Name].- Do not pressure the lead.- Acknowledge their interest.- Offer helpful assistance.- Ask one useful question if appropriate.- Keep the conversation open for the future.- Sound natural and human.- Do not mention AI, lead scoring, CRM, or internal workflow.\nReturn ONLY this JSON object and nothing else:\n{  \"follow_up_message\": \"The message to send to the lead\"}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        176,
+        288
+      ],
+      "id": "3b823fce-d0ce-4fac-8824-c6e3e1827850",
+      "name": "Basic LLM Chain3"
+    },
+    {
+      "parameters": {
+        "model": "qwen3:8b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        288,
+        432
+      ],
+      "id": "c00b34e0-5294-4b3f-8a36-f8a1fa29b8f6",
+      "name": "Ollama Chat Model3",
+      "credentials": {
+        "ollamaApi": {
+          "id": "UrleYy5sSAImiuse",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawText = $input.first().json.text || '';\n\nlet message = rawText;\n\nconst match = rawText.match(/\\{[\\s\\S]*\\}/);\n\nif (match) {\n  try {\n    const parsed = JSON.parse(match[0]);\n    message = parsed.follow_up_message || rawText;\n  } catch (error) {\n    message = rawText;\n  }\n}\n\nmessage = message\n  .replace(/\\[Name\\]/gi, '')\n  .replace(/^Hi\\s*,/i, 'Hi!')\n  .trim();\n\nconst lead = $('Insert row1').first().json;\n\nreturn [\n  {\n    json: {\n      lead_id: lead.lead_id,\n      full_name: lead.full_name,\n      email: lead.email,\n      phone: lead.phone,\n      property_type: lead.property_type,\n      budget: lead.budget,\n      location: lead.location,\n      message: lead.message,\n      lead_status: lead.lead_status,\n      lead_score: lead.lead_score,\n      urgency: lead.urgency,\n      intent: lead.intent,\n      summary: lead.summary,\n      recommended_action: lead.recommended_action,\n      follow_up_message: message\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        416
+      ],
+      "id": "780bfaba-9982-48fc-b7e7-47bc2e4cd459",
+      "name": "Code in JavaScript3"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Insert row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Insert row2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Insert row1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert row": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Update row(s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row(s)": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert row2": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert row1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain2": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain3": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain3",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript3": {
+      "main": [
+        [
+          {
+            "node": "Update row(s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "016b1e66-88c9-4d8c-a070-4c927e6c6c09",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "09f6cb8b40f0882b95bb68e92abc6ad149c11ede30ffb343a7b28157b87be5ea"
+  },
+  "nodeGroups": [],
+  "id": "xOvB3YMlW2NTJYZZ",
+  "tags": []
+}
